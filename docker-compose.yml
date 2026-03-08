@@ -1,0 +1,67 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: wellness-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: wellness
+      POSTGRES_PASSWORD: wellness
+      POSTGRES_DB: wellness_db
+      # Enable SSL for PostgreSQL
+      POSTGRES_INITDB_ARGS: "--data-checksums"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/certs:/certs:ro
+      - ./postgres-ssl-init.sh:/docker-entrypoint-initdb.d/init-ssl.sh
+    ports:
+      - "5432:5432"
+    command: >
+      postgres
+      -c ssl=on
+      -c ssl_cert_file=/certs/cert.pem
+      -c ssl_key_file=/certs/key.pem
+
+  backend:
+    build: ./backend
+    container_name: wellness-backend
+    command: npm run start:dev
+    environment:
+      DATABASE_URL: postgresql://wellness:wellness@postgres:5432/wellness_db?sslmode=require
+      JWT_ACCESS_SECRET: dev_access_secret
+      JWT_REFRESH_SECRET: dev_refresh_secret
+      ENCRYPTION_KEY: dev-encryption-key-32-chars!!!
+      NODE_ENV: development
+      FRONTEND_URL: http://localhost:5173
+      DISABLE_HTTPS: "true"
+      # OAuth credentials (set these to enable OAuth)
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_CALLBACK_URL: https://localhost:3000/auth/google/callback
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      GITHUB_CALLBACK_URL: https://localhost:3000/auth/github/callback
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - /app/certs
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+
+  frontend:
+    build: ./frontend
+    container_name: wellness-frontend
+    command: npm run dev -- --host
+    environment:
+      VITE_API_URL: http://localhost:3000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

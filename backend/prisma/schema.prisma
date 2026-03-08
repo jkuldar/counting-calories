@@ -1,0 +1,199 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                  String   @id @default(uuid())
+  email               String   @unique
+  passwordHash        String   // Already hashed with bcrypt (empty for OAuth users)
+  emailVerified       Boolean  @default(false)
+  verificationCode    String?  @unique
+  refreshToken        String?  // Should be hashed/encrypted
+  lastActivityAt      DateTime @default(now())
+  
+  // OAuth fields
+  oauthProvider       String?  // 'google', 'github', etc.
+  oauthId             String?  // Provider's user ID
+  
+  // Password reset
+  resetToken          String?  @unique
+  resetTokenExpiry    DateTime?
+  
+  // Two-Factor Authentication
+  twoFactorSecret     String?  // TOTP secret
+  twoFactorEnabled    Boolean  @default(false)
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  
+  // Relations
+  healthProfile       HealthProfile?
+  weightHistory       WeightHistory[]
+  privacySettings     PrivacySettings?
+  activityEntries     ActivityEntry[]
+  habitLogs           HabitLog[]
+  
+  @@map("users")
+}
+
+model HealthProfile {
+  id                    String   @id @default(uuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Consent
+  consentGiven          Boolean  @default(false)
+  consentTimestamp      DateTime?
+  
+  // Demographics (encrypted)
+  age                   Int?
+  gender                String?  // 'male', 'female', 'prefer_not_to_say'
+  
+  // Physical (normalized to kg, cm)
+  heightCm              Float?
+  currentWeightKg       Float?
+  targetWeightKg        Float?
+  
+  // Lifestyle
+  activityLevel         String?  // 'sedentary', 'light', 'moderate', 'active', 'very_active'
+  sleepHoursPerDay      Float?
+  stressLevel           String?  // 'low', 'moderate', 'high'
+  
+  // Dietary preferences
+  dietaryPreferences    String[] // 'vegetarian', 'vegan', 'pescatarian', 'keto', etc.
+  allergies             String[] // List of allergies
+  restrictions          String[] // List of dietary restrictions
+  
+  // Goals
+  primaryGoal           String?  // 'lose_weight', 'gain_weight', 'maintain', 'build_muscle', 'improve_fitness'
+  targetDate            DateTime?
+  weeklyActivityGoal    Int?     // Times per week
+  
+  // Fitness assessment
+  fitnessLevel          String?  // 'beginner', 'intermediate', 'advanced'
+  exerciseTypes         String[] // 'cardio', 'strength', 'flexibility', 'sports'
+  sessionDuration       String?  // '15-30min', '30-60min', '60+min'
+  exerciseEnvironment   String?  // 'home', 'gym', 'outdoors', 'mixed'
+  exerciseTimeOfDay     String?  // 'morning', 'afternoon', 'evening', 'no_preference'
+  enduranceMinutes      Int?     // Can run/walk for X minutes
+  pushUpsCount          Int?     // Max push-ups
+  squatsCount           Int?     // Max squats
+  occupationType        String?  // 'desk', 'physical', 'mixed', 'student', 'retired'
+  medicalConditions     String[] // List of conditions (encrypted)
+  medications           String[] // List of medications (encrypted)
+
+  // Derived metrics
+  bmi                   Float?
+  bmiClass              String?
+  wellnessScore         Int?
+  progressPercent       Float?
+  nextMilestonePercent  Float?
+  activityStreakDays    Int?
+  habitStreakDays       Int?
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  @@map("health_profiles")
+}
+
+model WeightHistory {
+  id                    String   @id @default(uuid())
+  userId                String
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  weightKg              Float    // Normalized to kg
+  recordedAt            DateTime @default(now())
+  note                  String?
+  
+  @@unique([userId, recordedAt])
+  @@map("weight_history")
+}
+
+model ActivityEntry {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String?
+  durationMin Int?
+  intensity   String?
+  calories    Float?
+  steps       Int?
+  loggedAt    DateTime @default(now())
+  note        String?
+
+  @@unique([userId, loggedAt])
+  @@map("activity_entries")
+}
+
+model HabitLog {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  habitType  String
+  loggedDate DateTime @default(now())
+  note       String?
+
+  @@unique([userId, habitType, loggedDate])
+  @@map("habit_logs")
+}
+
+model PrivacySettings {
+  id                    String   @id @default(uuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Data sharing preferences
+  shareWithAI           Boolean  @default(true)
+  shareAnonymousData    Boolean  @default(false)
+  allowDataExport       Boolean  @default(true)
+  
+  // What data to include in AI prompts
+  includeWeight         Boolean  @default(true)
+  includeActivity       Boolean  @default(true)
+  includeDietary        Boolean  @default(true)
+  includeGoals          Boolean  @default(true)
+  includeMedical        Boolean  @default(false)
+  
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  @@map("privacy_settings")
+}
+
+model AIInsight {
+  id                    String   @id @default(uuid())
+  userId                String
+  
+  // Prompt and response
+  prompt                String   @db.Text
+  response              String   @db.Text
+  
+  // Context hash (to identify similar contexts)
+  contextHash           String
+  
+  // Priority tagging
+  priority              String   // 'high', 'medium', 'low'
+  
+  // Validation flags
+  isValid               Boolean  @default(true)
+  violatesRestrictions  Boolean  @default(false)
+  validationNotes       String?  @db.Text
+  
+  // Metadata
+  model                 String   // 'gpt-3.5-turbo', etc.
+  tokensUsed            Int?
+  responseTimeMs        Int?
+  
+  createdAt             DateTime @default(now())
+  expiresAt             DateTime? // For cache invalidation
+  
+  @@index([userId, contextHash])
+  @@index([userId, createdAt])
+  @@map("ai_insights")
+}
