@@ -1,10 +1,12 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [vector]
 }
 
 model User {
@@ -37,6 +39,10 @@ model User {
   privacySettings     PrivacySettings?
   activityEntries     ActivityEntry[]
   habitLogs           HabitLog[]
+  mealPlans           MealPlan[]
+  mealPlanPreferences MealPlanPreferences?
+  nutritionalLogs     NutritionalLog[]
+  shoppingLists       ShoppingList[]
   
   @@map("users")
 }
@@ -196,4 +202,235 @@ model AIInsight {
   @@index([userId, contextHash])
   @@index([userId, createdAt])
   @@map("ai_insights")
+}
+
+// ============================================================
+// MEAL PLANNING & NUTRITION MODELS (Project 2)
+// ============================================================
+
+model Recipe {
+  id              String   @id @default(uuid())
+  title           String
+  cuisine         String
+  meal            String   // 'breakfast', 'lunch', 'dinner', 'snack'
+  servings        Int
+  summary         String   @db.Text
+  time            Int      // preparation time in minutes
+  difficultyLevel String   @map("difficulty_level") // 'easy', 'medium', 'hard'
+  dietaryTags     String[] @map("dietary_tags")
+  source          String   // 'rag-database', 'ai-generated', 'user-created'
+  img             String?
+
+  // Vector embedding for RAG (OpenAI text-embedding-3-small: 1536 dims)
+  embedding       Unsupported("vector(1536)")?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  ingredients     RecipeIngredient[]
+  preparation     RecipeStep[]
+  mealPlanMeals   MealPlanMeal[]
+
+  @@map("recipes")
+}
+
+model Ingredient {
+  id          String  @id @default(uuid())
+  label       String  @unique
+  unit        String  // 'gram' or 'ml'
+  quantity    Float   // reference quantity (typically 100)
+
+  // Nutritional info per reference quantity
+  calories    Float   // kcal
+  carbs       Float   // grams
+  protein     Float   // grams
+  fats        Float   // grams
+
+  // Vector embedding for RAG
+  embedding   Unsupported("vector(1536)")?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  recipeIngredients RecipeIngredient[]
+
+  @@map("ingredients")
+}
+
+model RecipeIngredient {
+  id           String     @id @default(uuid())
+  recipeId     String
+  recipe       Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  ingredientId String
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
+  quantity     Float      // in standardized unit (g or ml)
+
+  @@unique([recipeId, ingredientId])
+  @@map("recipe_ingredients")
+}
+
+model RecipeStep {
+  id            String @id @default(uuid())
+  recipeId      String
+  recipe        Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  stepNumber    Int
+  step          String          // step title
+  description   String @db.Text // step instructions
+  ingredientIds String[]        // ingredient IDs used in this step
+
+  @@unique([recipeId, stepNumber])
+  @@map("recipe_steps")
+}
+
+model MealPlan {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  duration    String   // 'daily', 'weekly'
+  startDate   DateTime
+  endDate     DateTime
+  version     Int      @default(1)
+  isActive    Boolean  @default(true)
+
+  // Snapshot of user preferences at creation time (for regeneration)
+  preferencesSnapshot Json?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  meals         MealPlanMeal[]
+  shoppingLists ShoppingList[]
+
+  @@index([userId, isActive])
+  @@index([userId, createdAt])
+  @@map("meal_plans")
+}
+
+model MealPlanMeal {
+  id          String   @id @default(uuid())
+  mealPlanId  String
+  mealPlan    MealPlan @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
+
+  recipeId    String?
+  recipe      Recipe?  @relation(fields: [recipeId], references: [id])
+
+  date        DateTime // specific date for this meal
+  mealType    String   // 'breakfast', 'lunch', 'dinner', 'snack'
+  mealTime    String?  // ISO 8601 time, e.g. "08:00"
+  sortOrder   Int      @default(0)
+
+  // Custom meal fields (when not linked to a recipe)
+  customName     String?
+  customCalories Float?
+  customProtein  Float?
+  customCarbs    Float?
+  customFats     Float?
+
+  // Calculated nutritional info
+  calories    Float?
+  protein     Float?
+  carbs       Float?
+  fats        Float?
+  servings    Int      @default(1)
+
+  isManual    Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([mealPlanId, date])
+  @@map("meal_plan_meals")
+}
+
+model ShoppingList {
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mealPlanId String?
+  mealPlan   MealPlan? @relation(fields: [mealPlanId], references: [id])
+
+  name       String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  items      ShoppingListItem[]
+
+  @@index([userId])
+  @@map("shopping_lists")
+}
+
+model ShoppingListItem {
+  id             String       @id @default(uuid())
+  shoppingListId String
+  shoppingList   ShoppingList @relation(fields: [shoppingListId], references: [id], onDelete: Cascade)
+
+  ingredientId   String?
+  name           String  // ingredient display name
+  quantity       Float   // in standardized unit
+  unit           String  // 'g', 'ml'
+  category       String  // 'dairy', 'produce', 'grains', 'protein', 'condiments', 'spices', 'oils', 'beverages', 'other'
+  isChecked      Boolean @default(false)
+  isRemoved      Boolean @default(false)
+
+  @@map("shopping_list_items")
+}
+
+model NutritionalLog {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  date       DateTime
+  mealType   String?  // 'breakfast', 'lunch', 'dinner', 'snack'
+
+  // Nutritional values
+  calories   Float
+  protein    Float
+  carbs      Float
+  fats       Float
+
+  // Source tracking
+  recipeId   String?
+  mealPlanId String?
+  isManual   Boolean  @default(false)
+
+  createdAt  DateTime @default(now())
+
+  @@index([userId, date])
+  @@map("nutritional_logs")
+}
+
+model MealPlanPreferences {
+  id                  String   @id @default(uuid())
+  userId              String   @unique
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  timezone            String   @default("UTC")
+  mealsPerDay         Int      @default(3)
+  snacksPerDay        Int      @default(0)
+
+  // Preferred meal times (HH:MM format)
+  breakfastTime       String?  // e.g. "08:00"
+  lunchTime           String?  // e.g. "12:30"
+  dinnerTime          String?  // e.g. "19:00"
+  snackTime           String?  // e.g. "15:00"
+
+  // Cuisine & ingredient preferences
+  cuisinePreferences  String[]
+  dislikedIngredients String[]
+
+  // Calorie/macro targets (can override auto-calculated values)
+  calorieTarget       Float?
+  proteinTarget       Float?
+  carbsTarget         Float?
+  fatsTarget          Float?
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@map("meal_plan_preferences")
 }
