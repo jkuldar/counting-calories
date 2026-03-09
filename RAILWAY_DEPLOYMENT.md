@@ -19,8 +19,8 @@ See projekt on **monorepo** struktuuriga - backend ja frontend on eraldi teenuse
 ### 2️⃣ Backend Teenus
 
 **Railway dashboardis:**
-1. Vajuta "New Service" → "GitHub Repo" → vali `numbers-dont-lie` repo
-2. **TÄHTIS:** Vali `railway` haru (branch)
+1. Vajuta "New Service" → "GitHub Repo" → vali `counting-calories` repo
+2. Vali `main` haru (branch)
 3. **Settings → Service:**
    - **Root Directory:** `backend`
    - **Watch Paths:** `/backend/**`
@@ -68,8 +68,8 @@ See projekt on **monorepo** struktuuriga - backend ja frontend on eraldi teenuse
 ### 3️⃣ Frontend Teenus
 
 **Railway dashboardis:**
-1. Vajuta "New Service" → "GitHub Repo" → vali `numbers-dont-lie` repo
-2. **TÄHTIS:** Vali `railway` haru (branch)
+1. Vajuta "New Service" → "GitHub Repo" → vali `counting-calories` repo
+2. Vali `main` haru (branch)
 3. **Settings → Service:**
    - **Root Directory:** `frontend`
    - **Watch Paths:** `/frontend/**`
@@ -117,7 +117,7 @@ See projekt on **monorepo** struktuuriga - backend ja frontend on eraldi teenuse
    - Backend teenus: `backend`
    - Frontend teenus: `frontend`
 
-2. Kontrolli, et **haru (branch)** on `railway`, mitte `main`
+2. Kontrolli, et **haru (branch)** on `main`
 
 ### ❌ "DATABASE_URL is not defined"
 
@@ -161,9 +161,9 @@ Ignoreeri - Railway hoolitseb SSL eest automaatselt. Kohalikud sertifikaadid on 
 ## 🔄 Kuidas Uuendada (Update)
 
 ### Automaatne deploy:
-1. Push muudatused `railway` harusse:
+1. Push muudatused `main` harusse:
    ```bash
-   git push origin railway
+   git push
    ```
 2. Railway tuvastab muudatused automaatselt ja deploidib uuesti
 
@@ -179,11 +179,11 @@ Ignoreeri - Railway hoolitseb SSL eest automaatselt. Kohalikud sertifikaadid on 
 Kui Sul on juba Railway account ja projekt loodud:
 
 ```bash
-# 1. Veendu, et oled railway harul
-git checkout railway
+# 1. Veendu, et oled main harul
+git checkout main
 
 # 2. Push viimased muudatused
-git push origin railway
+git push
 
 # 3. Mine Railway dashboardi ja seadista:
 #    - Backend teenus: Root Directory = backend
@@ -206,7 +206,7 @@ git push origin railway
 
 ## 💡 Näpunäited
 
-1. **Hoia `railway` haru eraldi:** Ära merge'i main harust railway'sse, kui pole vaja
+1. **Kasuta `main` haru:** Railway deploidib automaatselt iga push'i peale `main` harusse
 2. **Keskkonnamuutujad:** Kasuta Railway Variables, ära pane secreteid koodi
 3. **Logid:** Railway dashboard → teenus → Logs (vaata kohe, kui build failibub)
 4. **Maksumus:** Railway annab $5 ilma credit card'ita, jälgi kasutust
