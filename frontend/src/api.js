@@ -411,4 +411,181 @@ export class API {
 
     return response.json();
   }
+
+  // ========== MEAL PLANNING APIs ==========
+
+  // Recipes
+  async searchRecipes(params = {}) {
+    const qs = new URLSearchParams();
+    if (params.q) qs.set('q', params.q);
+    if (params.cuisine) qs.set('cuisine', params.cuisine);
+    if (params.meal) qs.set('meal', params.meal);
+    if (params.dietaryTags) qs.set('dietaryTags', params.dietaryTags);
+    if (params.maxTime) qs.set('maxTime', params.maxTime);
+    if (params.maxCalories) qs.set('maxCalories', params.maxCalories);
+    if (params.minProtein) qs.set('minProtein', params.minProtein);
+    if (params.limit) qs.set('limit', params.limit);
+    if (params.offset) qs.set('offset', params.offset);
+    return this.request(`/recipes?${qs.toString()}`);
+  }
+
+  async getRecipe(id) {
+    return this.request(`/recipes/${id}`);
+  }
+
+  async generateRecipe(preferences) {
+    return this.request('/recipes/generate', {
+      method: 'POST',
+      body: JSON.stringify(preferences),
+    });
+  }
+
+  async substituteIngredient(recipeId, ingredientId, reason) {
+    return this.request(`/recipes/${recipeId}/substitute`, {
+      method: 'POST',
+      body: JSON.stringify({ ingredientId, reason }),
+    });
+  }
+
+  async adjustPortions(recipeId, servings) {
+    return this.request(`/recipes/${recipeId}/portions/${servings}`);
+  }
+
+  // Meal Plans
+  async getMealPlans(activeOnly = false) {
+    return this.request(`/meal-plans?activeOnly=${activeOnly}`);
+  }
+
+  async getMealPlan(id) {
+    return this.request(`/meal-plans/${id}`);
+  }
+
+  async generateMealPlan(data) {
+    return this.request('/meal-plans', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getMealPlanPreferences() {
+    return this.request('/meal-plans/preferences');
+  }
+
+  async updateMealPlanPreferences(data) {
+    return this.request('/meal-plans/preferences', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async restoreMealPlanVersion(planId) {
+    return this.request(`/meal-plans/${planId}/restore`, { method: 'POST' });
+  }
+
+  async getMealPlanVersions(startDate, endDate) {
+    return this.request(`/meal-plans/versions?startDate=${startDate}&endDate=${endDate}`);
+  }
+
+  async addManualMeal(planId, data) {
+    return this.request(`/meal-plans/${planId}/meals`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async swapMeals(mealId1, mealId2) {
+    return this.request('/meal-plans/meals/swap', {
+      method: 'POST',
+      body: JSON.stringify({ mealId1, mealId2 }),
+    });
+  }
+
+  async updateMeal(mealId, data) {
+    return this.request(`/meal-plans/meals/${mealId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async regenerateMeal(mealId) {
+    return this.request(`/meal-plans/meals/${mealId}/regenerate`, { method: 'POST' });
+  }
+
+  async removeMeal(mealId) {
+    return this.request(`/meal-plans/meals/${mealId}`, { method: 'DELETE' });
+  }
+
+  // Nutrition
+  async analyzeNutrition(ingredients, servings) {
+    return this.request('/nutrition/analyze', {
+      method: 'POST',
+      body: JSON.stringify({ ingredients, servings }),
+    });
+  }
+
+  async getDailyNutrition(date, targets) {
+    const qs = new URLSearchParams();
+    if (targets?.calories) qs.set('calorieTarget', targets.calories);
+    if (targets?.protein) qs.set('proteinTarget', targets.protein);
+    if (targets?.carbs) qs.set('carbsTarget', targets.carbs);
+    if (targets?.fats) qs.set('fatsTarget', targets.fats);
+    return this.request(`/nutrition/daily/${date}?${qs.toString()}`);
+  }
+
+  async getWeeklyNutrition(startDate) {
+    return this.request(`/nutrition/weekly/${startDate}`);
+  }
+
+  async logNutrition(data) {
+    return this.request('/nutrition/log', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getNutritionLogs(startDate, endDate) {
+    return this.request(`/nutrition/logs?startDate=${startDate}&endDate=${endDate}`);
+  }
+
+  // Shopping Lists
+  async getShoppingLists() {
+    return this.request('/shopping-lists');
+  }
+
+  async getShoppingList(id) {
+    return this.request(`/shopping-lists/${id}`);
+  }
+
+  async generateShoppingListFromPlan(mealPlanId, name) {
+    return this.request('/shopping-lists/from-meal-plan', {
+      method: 'POST',
+      body: JSON.stringify({ mealPlanId, name }),
+    });
+  }
+
+  async generateShoppingListFromMeals(mealIds, name) {
+    return this.request('/shopping-lists/from-meals', {
+      method: 'POST',
+      body: JSON.stringify({ mealIds, name }),
+    });
+  }
+
+  async deleteShoppingList(id) {
+    return this.request(`/shopping-lists/${id}`, { method: 'DELETE' });
+  }
+
+  async updateShoppingItemQuantity(itemId, quantity) {
+    return this.request(`/shopping-lists/items/${itemId}/quantity`, {
+      method: 'PATCH',
+      body: JSON.stringify({ quantity }),
+    });
+  }
+
+  async toggleShoppingItem(itemId) {
+    return this.request(`/shopping-lists/items/${itemId}/toggle`, { method: 'PATCH' });
+  }
+
+  async removeShoppingItem(itemId) {
+    return this.request(`/shopping-lists/items/${itemId}`, { method: 'DELETE' });
+  }
 }
