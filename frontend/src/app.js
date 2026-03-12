@@ -6,6 +6,10 @@ import { ProfileForm } from './profile-form.js';
 import { Charts } from './charts.js';
 import { ComparisonView } from './comparison-view.js';
 import { PrivacySettings } from './privacy-settings.js';
+import { MealPlanView } from './meal-plan-view.js';
+import { RecipeBrowserView } from './recipe-browser.js';
+import { NutritionTrackerView } from './nutrition-tracker.js';
+import { ShoppingListView } from './shopping-list-view.js';
 import { showToast, showConfirm } from './utils.js';
 
 class App {
@@ -41,6 +45,10 @@ class App {
           <button class="nav-link" data-view="profile">Profile</button>
           <button class="nav-link" data-view="charts">Charts</button>
           <button class="nav-link" data-view="comparison">Compare</button>
+          <button class="nav-link" data-view="meals">Meals</button>
+          <button class="nav-link" data-view="recipes">Recipes</button>
+          <button class="nav-link" data-view="nutrition">Nutrition</button>
+          <button class="nav-link" data-view="shopping">Shopping</button>
           <button class="nav-link" data-view="privacy">Privacy</button>
         </div>
         <div class="nav-actions">
@@ -443,6 +451,18 @@ class App {
         case 'privacy':
           await this.renderPrivacy(container);
           break;
+        case 'meals':
+          await this.renderMealPlan(container);
+          break;
+        case 'recipes':
+          await this.renderRecipes(container);
+          break;
+        case 'nutrition':
+          await this.renderNutrition(container);
+          break;
+        case 'shopping':
+          await this.renderShopping(container);
+          break;
       }
     } catch (error) {
       container.innerHTML = `<div class="error-state">Failed to load view: ${error.message}</div>`;
@@ -499,6 +519,51 @@ class App {
     const privacy = new PrivacySettings(privacyEl, this.api);
     await privacy.load();
     this.components.privacy = privacy;
+  }
+
+  async renderMealPlan(container) {
+    container.innerHTML = '<div id="meal-plan-container"></div>';
+    const el = document.getElementById('meal-plan-container');
+    const view = new MealPlanView(el, this.api);
+    view.onViewRecipe = (recipeId) => {
+      this.currentView = 'recipes';
+      this.navigateToRecipe(recipeId);
+    };
+    view.onNavigateShoppingList = () => this.navigateTo('shopping');
+    await view.load();
+    this.components.mealPlan = view;
+  }
+
+  async renderRecipes(container, recipeId) {
+    container.innerHTML = '<div id="recipe-container"></div>';
+    const el = document.getElementById('recipe-container');
+    const view = new RecipeBrowserView(el, this.api);
+    await view.load(recipeId);
+    this.components.recipes = view;
+  }
+
+  navigateToRecipe(recipeId) {
+    const container = document.getElementById('app-content');
+    container.innerHTML = '<div class="loading-spinner">Loading...</div>';
+    this.renderRecipes(container, recipeId);
+    const navLinks = document.querySelectorAll('.nav-link');
+    navLinks.forEach(l => l.classList.toggle('active', l.dataset.view === 'recipes'));
+  }
+
+  async renderNutrition(container) {
+    container.innerHTML = '<div id="nutrition-container"></div>';
+    const el = document.getElementById('nutrition-container');
+    const view = new NutritionTrackerView(el, this.api);
+    await view.load();
+    this.components.nutrition = view;
+  }
+
+  async renderShopping(container) {
+    container.innerHTML = '<div id="shopping-container"></div>';
+    const el = document.getElementById('shopping-container');
+    const view = new ShoppingListView(el, this.api);
+    await view.load();
+    this.components.shopping = view;
   }
 
   showAddWeightModal() {
