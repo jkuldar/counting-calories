@@ -49,18 +49,16 @@ export class RecipeService {
   // ────────── RAG: vector similarity search ──────────
 
   async searchByVector(query: string, limit = 10): Promise<any[]> {
-    const embedding = await this.openai.embedding(query);
-    const vec = `[${embedding.join(',')}]`;
-
+    // pgvector not available - fall back to text search
     const results: any[] = await this.prisma.$queryRawUnsafe(
       `SELECT id, title, cuisine, meal, servings, summary, time, difficulty_level AS "difficultyLevel",
               dietary_tags AS "dietaryTags", source, img,
-              1 - (embedding <=> $1::vector) AS similarity
+              1.0 AS similarity
        FROM recipes
-       WHERE embedding IS NOT NULL
-       ORDER BY embedding <=> $1::vector
+       WHERE title ILIKE $1 OR summary ILIKE $1 OR source = 'ai-generated'
+       ORDER BY "createdAt" DESC
        LIMIT $2`,
-      vec,
+      `%${query}%`,
       limit,
     );
 
@@ -321,14 +319,14 @@ Return ONLY JSON: {"label": "substitute name (lowercase)", "quantity": number, "
   // ────────── Save a generated recipe ──────────
 
   private async saveGeneratedRecipe(data: any): Promise<RecipeDetail> {
-    // Generate embedding for the new recipe
+    // Generate embedding for the new recipe (stored as JSON string)
     const embText = `${data.title} - ${data.cuisine} ${data.meal}. ${data.summary}. Ingredients: ${data.ingredients.map((i: any) => i.label).join(', ')}. Tags: ${(data.dietaryTags || []).join(', ')}.`;
     const emb = await this.openai.embedding(embText);
     const vec = `[${emb.join(',')}]`;
 
     const rows: any[] = await this.prisma.$queryRawUnsafe(
       `INSERT INTO recipes (id, title, cuisine, meal, servings, summary, time, difficulty_level, dietary_tags, source, embedding, "createdAt", "updatedAt")
-       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, 'ai-generated', $9::vector, NOW(), NOW())
+       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, 'ai-generated', $9, NOW(), NOW())
        RETURNING id`,
       data.title,
       data.cuisine,

@@ -1,12 +1,10 @@
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["postgresqlExtensions"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider   = "postgresql"
-  url        = env("DATABASE_URL")
-  extensions = [vector]
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -221,8 +219,8 @@ model Recipe {
   source          String   // 'rag-database', 'ai-generated', 'user-created'
   img             String?
 
-  // Vector embedding for RAG (OpenAI text-embedding-3-small: 1536 dims)
-  embedding       Unsupported("vector(1536)")?
+  // Vector embedding for RAG (stored as JSON array string)
+  embedding       String?
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -247,8 +245,8 @@ model Ingredient {
   protein     Float   // grams
   fats        Float   // grams
 
-  // Vector embedding for RAG
-  embedding   Unsupported("vector(1536)")?
+  // Vector embedding for RAG (stored as JSON array string)
+  embedding   String?
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

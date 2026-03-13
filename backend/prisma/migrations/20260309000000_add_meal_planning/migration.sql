@@ -1,6 +1,3 @@
--- Enable pgvector extension
-CREATE EXTENSION IF NOT EXISTS vector;
-
 -- CreateTable: recipes
 CREATE TABLE "recipes" (
     "id" TEXT NOT NULL,
@@ -14,7 +11,7 @@ CREATE TABLE "recipes" (
     "dietary_tags" TEXT[],
     "source" TEXT NOT NULL,
     "img" TEXT,
-    "embedding" vector(1536),
+    "embedding" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -31,7 +28,7 @@ CREATE TABLE "ingredients" (
     "carbs" DOUBLE PRECISION NOT NULL,
     "protein" DOUBLE PRECISION NOT NULL,
     "fats" DOUBLE PRECISION NOT NULL,
-    "embedding" vector(1536),
+    "embedding" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
