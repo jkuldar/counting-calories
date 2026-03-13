@@ -16,7 +16,7 @@ export class Auth {
           <div class="auth-branding-inner">
             <div class="auth-brand-logo">
               <span class="auth-brand-icon">📊</span>
-              <h1>Numbers Don't Lie</h1>
+              <h1>Counting Calories</h1>
             </div>
             <p class="auth-brand-tagline">Your privacy-focused wellness platform</p>
             <ul class="auth-features">
@@ -55,7 +55,7 @@ export class Auth {
         <div class="auth-container">
           <div class="auth-card">
             <div class="auth-header">
-              <h2>Numbers Don't Lie</h2>
+              <h2>Counting Calories</h2>
               <p class="auth-subtitle">Welcome back</p>
             </div>
 
