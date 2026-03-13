@@ -41,21 +41,39 @@ class App {
           <span></span>
         </button>
         <div class="nav-links">
-          <button class="nav-link active" data-view="dashboard">Dashboard</button>
-          <button class="nav-link" data-view="profile">Profile</button>
-          <button class="nav-link" data-view="charts">Charts</button>
-          <button class="nav-link" data-view="comparison">Compare</button>
-          <button class="nav-link" data-view="meals">Meals</button>
-          <button class="nav-link" data-view="recipes">Recipes</button>
-          <button class="nav-link" data-view="nutrition">Nutrition</button>
-          <button class="nav-link" data-view="shopping">Shopping</button>
-          <button class="nav-link" data-view="privacy">Privacy</button>
+          <button class="nav-link" data-view="dashboard">Dashboard</button>
+
+          <div class="nav-dropdown">
+            <button class="nav-link nav-dropdown-toggle" data-dropdown="health">Health <span class="dropdown-arrow">▾</span></button>
+            <div class="nav-dropdown-menu" id="dropdown-health">
+              <button class="nav-link" data-view="charts">Charts</button>
+              <button class="nav-link" data-view="comparison">Compare</button>
+            </div>
+          </div>
+
+          <div class="nav-dropdown">
+            <button class="nav-link nav-dropdown-toggle" data-dropdown="food">Food <span class="dropdown-arrow">▾</span></button>
+            <div class="nav-dropdown-menu" id="dropdown-food">
+              <button class="nav-link" data-view="nutrition">Nutrition</button>
+              <button class="nav-link" data-view="meals">Meals</button>
+              <button class="nav-link" data-view="recipes">Recipes</button>
+              <button class="nav-link" data-view="shopping">Shopping</button>
+            </div>
+          </div>
+
+          <div class="nav-dropdown">
+            <button class="nav-link nav-dropdown-toggle" data-dropdown="account">Account <span class="dropdown-arrow">▾</span></button>
+            <div class="nav-dropdown-menu" id="dropdown-account">
+              <button class="nav-link" data-view="profile">Profile</button>
+              <button class="nav-link" data-view="privacy">Privacy</button>
+            </div>
+          </div>
         </div>
         <div class="nav-actions">
           <button class="btn-icon btn-darkmode" id="darkmode-btn" title="Toggle dark mode" aria-label="Toggle dark mode">Dark</button>
-          <button class="btn-icon btn-logout" id="logout-btn" title="Logi välja" aria-label="Logi välja">
+          <button class="btn-icon btn-logout" id="logout-btn" title="Log out" aria-label="Log out">
             <span class="btn-icon__glyph">⏻</span>
-            <span class="btn-icon__label">Logi välja</span>
+            <span class="btn-icon__label">Log out</span>
           </button>
         </div>
       </nav>
@@ -68,48 +86,64 @@ class App {
       const isMobile = window.innerWidth <= 1200;
 
       if (isMobile) {
-        // On mobile, move actions inside nav-links if not already there
         if (navActions && navActions.parentElement?.classList.contains('main-nav')) {
           navLinksContainer.appendChild(navActions);
         }
       } else {
-        // On desktop, move actions back to main nav if not already there
         if (navActions && !navActions.parentElement?.classList.contains('main-nav')) {
           nav.querySelector('.main-nav').appendChild(navActions);
         }
       }
     };
 
-    // Initial setup
     handleMobileMenu();
-    
-    // Handle resize
     window.addEventListener('resize', handleMobileMenu);
 
     // Burger menu toggle
     const burgerMenu = document.getElementById('burger-menu');
     const navLinksContainer = nav.querySelector('.nav-links');
-    
+
     burgerMenu?.addEventListener('click', () => {
       burgerMenu.classList.toggle('active');
       navLinksContainer.classList.toggle('active');
       document.body.classList.toggle('menu-open');
     });
 
-    // Nav click handlers
-    const navLinks = nav.querySelectorAll('.nav-link');
-    navLinks.forEach(link => {
+    // Dropdown toggles
+    nav.querySelectorAll('.nav-dropdown-toggle').forEach(toggle => {
+      toggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const targetId = 'dropdown-' + toggle.dataset.dropdown;
+        const menu = document.getElementById(targetId);
+        const isOpen = menu.classList.contains('open');
+        // Close all dropdowns first
+        nav.querySelectorAll('.nav-dropdown-menu').forEach(m => m.classList.remove('open'));
+        nav.querySelectorAll('.nav-dropdown-toggle').forEach(t => t.classList.remove('dropdown-open'));
+        if (!isOpen) {
+          menu.classList.add('open');
+          toggle.classList.add('dropdown-open');
+        }
+      });
+    });
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', () => {
+      nav.querySelectorAll('.nav-dropdown-menu').forEach(m => m.classList.remove('open'));
+      nav.querySelectorAll('.nav-dropdown-toggle').forEach(t => t.classList.remove('dropdown-open'));
+    });
+
+    // Nav item click handlers (only items with data-view)
+    nav.querySelectorAll('.nav-link[data-view]').forEach(link => {
       link.addEventListener('click', () => {
         const view = link.dataset.view;
         this.navigateTo(view);
-        
-        navLinks.forEach(l => l.classList.remove('active'));
-        link.classList.add('active');
-        
-        // Close mobile menu on navigation
+        // Close mobile menu
         burgerMenu?.classList.remove('active');
         navLinksContainer?.classList.remove('active');
         document.body.classList.remove('menu-open');
+        // Close all dropdowns
+        nav.querySelectorAll('.nav-dropdown-menu').forEach(m => m.classList.remove('open'));
+        nav.querySelectorAll('.nav-dropdown-toggle').forEach(t => t.classList.remove('dropdown-open'));
       });
     });
 
@@ -119,7 +153,6 @@ class App {
     darkModeBtn?.addEventListener('click', () => {
       this.toggleDarkMode();
       this.updateDarkModeBtn(darkModeBtn);
-      // Close mobile menu
       burgerMenu?.classList.remove('active');
       navLinksContainer?.classList.remove('active');
       document.body.classList.remove('menu-open');
@@ -128,13 +161,13 @@ class App {
     // Logout
     document.getElementById('logout-btn')?.addEventListener('click', async () => {
       const confirmed = await showConfirm({
-        title: 'Logout',
-        message: 'Are you sure you want to logout?',
-        confirmText: 'Logout',
+        title: 'Log out',
+        message: 'Are you sure you want to log out?',
+        confirmText: 'Log out',
         cancelText: 'Cancel',
         type: 'warning'
       });
-      
+
       if (confirmed) {
         localStorage.removeItem('ndli_access_token');
         location.reload();
@@ -425,13 +458,14 @@ class App {
     container.innerHTML = '<div class="loading-spinner">Loading...</div>';
 
     // Update active navigation link
-    const navLinks = document.querySelectorAll('.nav-link');
-    navLinks.forEach(link => {
-      if (link.dataset.view === view) {
-        link.classList.add('active');
-      } else {
-        link.classList.remove('active');
-      }
+    document.querySelectorAll('.nav-link[data-view]').forEach(link => {
+      link.classList.toggle('active', link.dataset.view === view);
+    });
+    // Highlight dropdown toggle if active view is inside it
+    document.querySelectorAll('.nav-dropdown-toggle').forEach(toggle => {
+      const menu = document.getElementById('dropdown-' + toggle.dataset.dropdown);
+      const hasActive = menu?.querySelector(`[data-view="${view}"]`);
+      toggle.classList.toggle('has-active', !!hasActive);
     });
 
     try {

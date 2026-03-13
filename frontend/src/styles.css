@@ -219,6 +219,60 @@ body {
   background: rgba(106, 27, 154, 0.1);
 }
 
+/* Dropdown nav menus */
+.nav-dropdown {
+  position: relative;
+}
+
+.nav-dropdown-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  min-width: 160px;
+  z-index: 1100;
+  flex-direction: column;
+  gap: 0;
+  overflow: hidden;
+}
+
+.nav-dropdown-menu.open {
+  display: flex;
+}
+
+.nav-dropdown-menu .nav-link {
+  text-align: left;
+  border-radius: 0;
+  white-space: nowrap;
+  width: 100%;
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-dropdown-menu .nav-link:last-child {
+  border-bottom: none;
+}
+
+.nav-dropdown-toggle.has-active,
+.nav-dropdown-toggle.has-active:hover {
+  color: var(--primary);
+  background: rgba(106, 27, 154, 0.15);
+}
+
+.dropdown-arrow {
+  font-size: 0.7em;
+  opacity: 0.7;
+  transition: transform 0.2s ease;
+  display: inline-block;
+}
+
+.nav-dropdown-toggle.dropdown-open .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
 /* Content Container */
 #app-content {
   max-width: 1400px;
@@ -1878,6 +1932,30 @@ button:disabled {
     text-align: left;
     padding: 1rem 1.25rem;
     border-bottom: 1px solid var(--border);
+  }
+
+  /* Dropdowns on mobile - inline expand */
+  .nav-dropdown {
+    width: 100%;
+  }
+
+  .nav-dropdown-menu {
+    position: static;
+    box-shadow: none;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    min-width: unset;
+  }
+
+  .nav-dropdown-menu .nav-link {
+    padding-left: 2.5rem;
+    background: rgba(0, 0, 0, 0.03);
+    border-bottom: 1px solid var(--border);
+  }
+
+  [data-theme='dark'] .nav-dropdown-menu .nav-link {
+    background: rgba(255, 255, 255, 0.03);
   }
 
   /* When nav-actions is inside nav-links on mobile */
