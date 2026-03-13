@@ -179,9 +179,7 @@ CREATE INDEX "meal_plan_meals_mealPlanId_date_idx" ON "meal_plan_meals"("mealPla
 CREATE INDEX "shopping_lists_userId_idx" ON "shopping_lists"("userId");
 CREATE INDEX "nutritional_logs_userId_date_idx" ON "nutritional_logs"("userId", "date");
 
--- Vector similarity search indexes (IVFFlat for performance)
-CREATE INDEX "recipes_embedding_idx" ON "recipes" USING ivfflat ("embedding" vector_cosine_ops) WITH (lists = 100);
-CREATE INDEX "ingredients_embedding_idx" ON "ingredients" USING ivfflat ("embedding" vector_cosine_ops) WITH (lists = 100);
+-- Vector indexes removed (pgvector not available on Railway)
 
 -- AddForeignKey
 ALTER TABLE "recipe_ingredients" ADD CONSTRAINT "recipe_ingredients_recipeId_fkey" FOREIGN KEY ("recipeId") REFERENCES "recipes"("id") ON DELETE CASCADE ON UPDATE CASCADE;
