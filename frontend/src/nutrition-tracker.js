@@ -18,7 +18,7 @@ export class NutritionTrackerView {
       if (this.mode === 'daily') {
         const [daily, logs] = await Promise.all([
           this.api.getDailyNutrition(this.selectedDate).catch(() => null),
-          this.api.getNutritionLogs({ date: this.selectedDate, limit: 50 }).catch(() => []),
+          this.api.getNutritionLogs(this.selectedDate, this.selectedDate).catch(() => []),
         ]);
         this.dailyData = daily;
         this.logs = Array.isArray(logs) ? logs : (logs?.data || []);
