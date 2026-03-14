@@ -192,7 +192,7 @@ class App {
     const oauthCode = urlParams.get('oauthCode');
 
     if (oauthCode) {
-      window.history.replaceState({}, document.title, window.location.pathname);
+      window.history.replaceState({}, document.title, '/');
       try {
         const tokens = await this.api.exchangeOAuthCode(oauthCode);
         this.api.setToken(tokens.accessToken);
