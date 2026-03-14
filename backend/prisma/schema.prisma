@@ -384,6 +384,7 @@ model NutritionalLog {
 
   date       DateTime
   mealType   String?  // 'breakfast', 'lunch', 'dinner', 'snack'
+  description String? @db.Text // free-text food description
 
   // Nutritional values
   calories   Float

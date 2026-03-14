@@ -357,7 +357,7 @@ export class MealPlanView {
           snacksPerDay: Number(fd.get('snacksPerDay')),
         });
         this.currentPlan = plan;
-        this.render();
+        await this.load();
         showToast('Meal plan generated!', 'success');
       } catch {
         showToast('Failed to generate meal plan', 'error');

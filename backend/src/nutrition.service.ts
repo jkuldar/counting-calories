@@ -468,6 +468,7 @@ export class NutritionService {
   async logMeal(userId: string, data: {
     date: string;
     mealType?: string;
+    description?: string;
     calories: number;
     protein: number;
     carbs: number;
@@ -481,6 +482,7 @@ export class NutritionService {
         userId,
         date: new Date(data.date),
         mealType: data.mealType,
+        description: data.description || null,
         calories: data.calories,
         protein: data.protein,
         carbs: data.carbs,
