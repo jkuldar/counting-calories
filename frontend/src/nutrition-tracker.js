@@ -230,10 +230,10 @@ export class NutritionTrackerView {
               </select>
             </label>
             <div class="form-row">
-              <label>Calories (kcal)<input type="number" name="calories" placeholder="Optional"></label>
-              <label>Protein (g)<input type="number" name="protein" placeholder="Optional"></label>
-              <label>Carbs (g)<input type="number" name="carbs" placeholder="Optional"></label>
-              <label>Fats (g)<input type="number" name="fats" placeholder="Optional"></label>
+              <label>Calories (kcal)<input type="number" name="calories" placeholder="Required" required min="0"></label>
+              <label>Protein (g)<input type="number" name="protein" placeholder="0" min="0"></label>
+              <label>Carbs (g)<input type="number" name="carbs" placeholder="0" min="0"></label>
+              <label>Fats (g)<input type="number" name="fats" placeholder="0" min="0"></label>
             </div>
             <label>Date<input type="date" name="date" value="${this.selectedDate}"></label>
           </form>
@@ -251,16 +251,21 @@ export class NutritionTrackerView {
     dialog.querySelector('#log-cancel')?.addEventListener('click', () => dialog.remove());
     dialog.querySelector('#log-submit')?.addEventListener('click', async () => {
       const fd = new FormData(dialog.querySelector('#log-food-form'));
+      const calories = Number(fd.get('calories'));
+      if (!fd.get('date') || !calories) {
+        showToast('Date and calories are required', 'error');
+        return;
+      }
       dialog.remove();
       try {
         await this.api.logNutrition({
           description: fd.get('description'),
           mealType: fd.get('mealType'),
           date: fd.get('date'),
-          calories: fd.get('calories') ? Number(fd.get('calories')) : undefined,
-          protein: fd.get('protein') ? Number(fd.get('protein')) : undefined,
-          carbs: fd.get('carbs') ? Number(fd.get('carbs')) : undefined,
-          fats: fd.get('fats') ? Number(fd.get('fats')) : undefined,
+          calories,
+          protein: fd.get('protein') ? Number(fd.get('protein')) : 0,
+          carbs: fd.get('carbs') ? Number(fd.get('carbs')) : 0,
+          fats: fd.get('fats') ? Number(fd.get('fats')) : 0,
         });
         showToast('Food logged!', 'success');
         await this.load();
