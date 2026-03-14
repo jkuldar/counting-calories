@@ -148,8 +148,8 @@ export class RecipeBrowserView {
             <ul>
               ${ingredients.map(ri => `
                 <li class="ingredient-item" data-ingredient-id="${ri.ingredientId}">
-                  <span>${ri.quantity} ${ri.unit} ${this.escapeHtml(ri.ingredient?.name || 'Unknown')}</span>
-                  <button class="btn-xs" data-action="substitute" data-ingredient="${this.escapeAttr(ri.ingredient?.name || '')}">Substitute</button>
+                  <span>${ri.quantity} ${ri.unit} ${this.escapeHtml(ri.label || ri.ingredient?.name || ri.ingredient?.label || 'Unknown')}</span>
+                  <button class="btn-xs" data-action="substitute" data-ingredient="${this.escapeAttr(ri.label || ri.ingredient?.name || '')}">Substitute</button>
                 </li>
               `).join('')}
             </ul>
@@ -160,7 +160,7 @@ export class RecipeBrowserView {
             <ol>
               ${steps.map(s => `
                 <li>
-                  <p>${this.escapeHtml(s.instruction)}</p>
+                  <p>${this.escapeHtml(s.description || s.instruction || '')}</p>
                   ${s.duration ? `<span class="step-duration">${s.duration} min</span>` : ''}
                   ${s.temperature ? `<span class="step-temp">${s.temperature}°${s.temperatureUnit || 'C'}</span>` : ''}
                 </li>
