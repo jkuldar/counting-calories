@@ -239,7 +239,14 @@ export class RecipeBrowserView {
     this.container.querySelector('#rb-analyze-nutrition')?.addEventListener('click', async () => {
       try {
         showToast('Analyzing nutrition...', 'info');
-        const result = await this.api.analyzeNutrition(this.selectedRecipe.id);
+        const r = this.selectedRecipe;
+        const servings = Number(this.container.querySelector('#rb-servings')?.value) || r.servings || 1;
+        const ingredients = (r.ingredients || []).map(ri => ({
+          name: ri.label || ri.ingredient?.name || ri.ingredient?.label || 'unknown',
+          quantity: ri.quantity,
+          unit: ri.unit === 'ml' ? 'ml' : 'gram',
+        }));
+        const result = await this.api.analyzeNutrition(ingredients, servings);
         this.showNutritionAnalysis(result);
       } catch {
         showToast('Failed to analyze nutrition', 'error');
